@@ -1,11 +1,12 @@
 from asyncio import AbstractEventLoop
 from os import environ
 from typing import Any, Dict, Optional, Type, Union
-from ujson import loads as ujson_loads
 
 from aioredis import Redis, create_redis
+from ujson import loads as ujson_loads
+from tldextract import extract
 
-__all__ = ['env', 'init_redis']
+__all__ = ['env', 'extract_domain', 'init_redis']
 
 
 async def init_redis(redis_url: str, loop: AbstractEventLoop) -> Redis:
@@ -63,3 +64,15 @@ def env(
             )
     elif type_ == dict:
         return ujson_loads(val)
+
+
+def extract_domain(url: str) -> str:
+    """Extracts and returns the domain, including the suffix,
+    of the supplied URL
+
+    :param url: The url to have its domain extracted from
+    :return: The extracted domain
+    """
+    extracted = extract(url)
+    suffix = f'.{extracted.suffix}' if extracted.suffix else ''
+    return f'{extracted.domain}{suffix}'

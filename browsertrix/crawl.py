@@ -7,15 +7,14 @@ import uuid
 from asyncio import AbstractEventLoop, gather as aio_gather, get_event_loop
 from functools import partial
 from typing import Dict, List, Optional, Union
-from urllib.parse import urlsplit
 
 import ujson as json
 from aiohttp import AsyncResolver, ClientSession, TCPConnector
 from aioredis import Redis
 from starlette.exceptions import HTTPException
 
-from .schema import CacheMode, CaptureMode, CrawlInfo, CrawlType, CreateCrawlRequest
-from .utils import env, init_redis
+from .schema import CacheMode, CaptureMode, CrawlInfo, CrawlType, CreateCrawlRequest, BrowserOverrides
+from .utils import env, extract_domain, init_redis
 
 __all__ = ['Crawl', 'CrawlManager']
 
@@ -131,7 +130,8 @@ class CrawlManager:
         data = await self.redis.hgetall(crawl.info_key)
         if not data:
             raise HTTPException(404, detail='crawl not found')
-
+        if 'browser_overrides' in data:
+            data['browser_overrides'] = json.loads(data['browser_overrides'])
         crawl.model = CrawlInfo(**data)
         return crawl
 
@@ -312,14 +312,10 @@ class Crawl:
         domains = set()
 
         for url in urls:
-            domain = urlsplit(url).netloc
-            domains.add(domain)
-
-        if not domains:
-            return
-
-        for domain in domains:
-            await self.redis.sadd(self.scopes_key, json.dumps({'domain': domain}))
+            domain = extract_domain(url)
+            if domain not in domains:
+                domains.add(domain)
+                await self.redis.sadd(self.scopes_key, json.dumps({'domain': domain}))
 
     async def queue_urls(self, urls: List[str]) -> Dict[str, bool]:
         """Adds the supplied list of URLs to this crawls queue
@@ -360,6 +356,8 @@ class Crawl:
             self.redis.lrange(self.tabs_done_key, 0, -1),
             loop=self.loop,
         )
+        if 'browser_overrides' in data:
+            data['browser_overrides'] = json.loads(data['browser_overrides'])
 
         data['browsers'] = list(browsers)
         data['tabs_done'] = [json.loads(elem) for elem in tabs_done]
@@ -476,8 +474,10 @@ class Crawl:
             data['browser_overrides'] = crawl_request.browser_overrides.dict(
                 skip_defaults=True
             )
-
-        self.model = CrawlInfo(**data)
+            self.model = CrawlInfo(**data)
+            data['browser_overrides'] = json.dumps(data['browser_overrides'])
+        else:
+            self.model = CrawlInfo(**data)
         await self.redis.hmset_dict(self.info_key, data)
 
         # init seeds

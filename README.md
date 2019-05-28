@@ -13,7 +13,7 @@ It includes the following features:
 * Crawling via customiazable YAML-based crawl spec
 * High-fidelity browser-based crawlers (controlled via [webrecorder/autobrowser](https://github.com/webrecorder/autobrowser))
 * Execution of complex, domain-specific in-page behaviors (provided by [webrecorder/behaviors](https://github.com/webrecorder/behaviors))
-* Capture or replay into designated [pywb]((https://github.com/webrecorder/pywb) collections
+* Capture or replay into designated [pywb](https://github.com/webrecorder/pywb) collections
 * Optional screenshot creation of each page.
 * Support for customized browser profiles to minimize capture of private information.
 
