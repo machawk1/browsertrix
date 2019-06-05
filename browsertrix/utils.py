@@ -1,11 +1,10 @@
 from asyncio import AbstractEventLoop
 from os import environ
 from typing import Any, Dict, Optional, Type, Union
+from urllib.parse import urlsplit
 
 from aioredis import Redis, create_redis
 from ujson import loads as ujson_loads
-from urllib.parse import urlsplit
-
 
 __all__ = ['env', 'extract_domain', 'init_redis']
 
