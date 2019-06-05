@@ -4,7 +4,8 @@ from typing import Any, Dict, Optional, Type, Union
 
 from aioredis import Redis, create_redis
 from ujson import loads as ujson_loads
-from tldextract import extract
+from urllib.parse import urlsplit
+
 
 __all__ = ['env', 'extract_domain', 'init_redis']
 
@@ -73,6 +74,5 @@ def extract_domain(url: str) -> str:
     :param url: The url to have its domain extracted from
     :return: The extracted domain
     """
-    extracted = extract(url)
-    suffix = f'.{extracted.suffix}' if extracted.suffix else ''
-    return f'{extracted.domain}{suffix}'
+    extracted = urlsplit(url).netloc
+    return extracted.replace('www.', '')

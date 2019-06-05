@@ -9,4 +9,3 @@ pyyaml
 ujson
 uvloop
 uvicorn
-tldextract
